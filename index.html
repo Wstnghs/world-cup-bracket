@@ -550,7 +550,9 @@ const FLAGS = {
   'France':'🇫🇷','Senegal':'🇸🇳','Norway':'🇳🇴','Iraq':'🇮🇶',
   'Argentina':'🇦🇷','Austria':'🇦🇹','Algeria':'🇩🇿','Jordan':'🇯🇴',
   'Portugal':'🇵🇹','Colombia':'🇨🇴','Uzbekistan':'🇺🇿','DRC':'🇨🇩',
-  'England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Croatia':'🇭🇷','Panama':'🇵🇦','Ghana':'🇬🇭'
+  'England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Croatia':'🇭🇷','Panama':'🇵🇦','Ghana':'🇬🇭',
+  'Bosnia and Herzegovina':'🇧🇦','Algeria':'🇩🇿','Cape Verde':'🇨🇻','Paraguay':'🇵🇾',
+  'DRC':'🇨🇩','Ivory Coast':'🇨🇮','South Africa':'🇿🇦','Egypt':'🇪🇬','Australia':'🇦🇺'
 };
 
 const GROUPS_DATA = [
@@ -568,11 +570,31 @@ const GROUPS_DATA = [
   { letter:'L', teams:['England','Croatia','Panama','Ghana'] }
 ];
 
-// STATE: loaded from localStorage
+// Official 2026 World Cup Round of 32 matchups (fully confirmed)
+const R32_MATCHUPS = [
+  { t1:'South Africa', t2:'Canada' },           // Jun 28 - LA
+  { t1:'Brazil',       t2:'Japan' },             // Jun 29 - Houston
+  { t1:'Germany',      t2:'Paraguay' },          // Jun 29 - Boston
+  { t1:'Netherlands',  t2:'Morocco' },           // Jun 29 - Monterrey
+  { t1:'Ivory Coast',  t2:'Norway' },            // Jun 30 - Dallas
+  { t1:'France',       t2:'Sweden' },            // Jun 30 - New Jersey
+  { t1:'Mexico',       t2:'Egypt' },             // Jun 30 - Mexico City
+  { t1:'England',      t2:'DRC' },               // Jul 1  - Atlanta
+  { t1:'Belgium',      t2:'Senegal' },           // Jul 1  - Seattle
+  { t1:'USA',          t2:'Bosnia and Herzegovina' }, // Jul 1 - San Francisco
+  { t1:'Spain',        t2:'Austria' },           // Jul 3  - LA
+  { t1:'Switzerland',  t2:'Algeria' },           // Jul 3  - Vancouver
+  { t1:'Portugal',     t2:'Croatia' },           // Jul 3  - Toronto
+  { t1:'Colombia',     t2:'Ghana' },             // Jul 4  - Kansas City
+  { t1:'Argentina',    t2:'Cape Verde' },        // Jul 4  - Miami
+  { t1:'Australia',    t2:'Egypt' },             // Jul 4  - Dallas
+];
+
+// STATE: loaded from localStorage/JSONBin
 let state = JSON.parse(localStorage.getItem('wc2026state') || 'null') || {
   isAdmin: false,
-  groupPoints: {},       // { 'A': {'Mexico': 0, ...}, ... }
-  groupStatus: {},       // { 'A': {'Mexico': 'q1'|'q2'|'q3'|'out'|'' } }
+  groupPoints: {},
+  groupStatus: {},
   rounds: {
     r32:  Array(16).fill(null).map(()=>({t1:null,t2:null,winner:null})),
     r16:  Array(8).fill(null).map(()=>({t1:null,t2:null,winner:null})),
@@ -581,6 +603,17 @@ let state = JSON.parse(localStorage.getItem('wc2026state') || 'null') || {
     final:Array(1).fill(null).map(()=>({t1:null,t2:null,winner:null}))
   }
 };
+
+// Always ensure r32 has the confirmed matchups pre-filled
+// (merges in teams without overwriting winners already set by admin)
+R32_MATCHUPS.forEach((matchup, i) => {
+  if (!state.rounds.r32[i]) {
+    state.rounds.r32[i] = { t1: matchup.t1, t2: matchup.t2, winner: null };
+  } else {
+    if (!state.rounds.r32[i].t1) state.rounds.r32[i].t1 = matchup.t1;
+    if (!state.rounds.r32[i].t2) state.rounds.r32[i].t2 = matchup.t2;
+  }
+});
 
 // Init group points/status
 GROUPS_DATA.forEach(g => {
